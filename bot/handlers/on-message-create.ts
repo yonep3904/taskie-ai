@@ -57,7 +57,6 @@ export async function onMessageCreate(message: Message): Promise<void> {
 
     console.log(`[Bot] 返答送信 | ユーザー: ${message.author.tag}`);
   } catch (error) {
-    const message_ = error instanceof Error ? error.message : String(error);
-    console.error("[Bot] メッセージ処理中にエラーが発生しました:", message_);
+    console.error("[Bot] メッセージ処理中にエラーが発生しました:", error);
   }
 }
