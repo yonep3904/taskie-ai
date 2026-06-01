@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Message } from "discord.js";
 import {
   AI_UNAVAILABLE_MESSAGE,
+  buildTaskContext,
   WELCOME_MESSAGE,
 } from "@/constants/bot-messages";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -15,20 +16,22 @@ import {
   findPendingTasksByTitle,
 } from "@/services/task";
 import { findOrCreateUser } from "@/services/user";
-import type { Database, UserRow } from "@/types/database";
+import type { Database, TaskRow, UserRow } from "@/types/database";
 
 type SupabaseAdminClient = SupabaseClient<Database>;
 
 /**
- * タスク抽出をバックグラウンドで実行し、DB を更新する。
- * 通知は行わない。チャット返答をブロックしないよう void で呼び出す。
+ * タスク抽出を実行し、DB を更新して登録・完了タスクを返す。
+ * 返却値は AI 返答のコンテキストとして使用する。
  */
 async function runTaskExtraction(
   supabase: SupabaseAdminClient,
   user: UserRow,
   userMessage: string,
-): Promise<void> {
+): Promise<{ registered: TaskRow[]; completed: TaskRow[] }> {
   const result = await extractFromMessage(userMessage);
+  const registered: TaskRow[] = [];
+  const completed: TaskRow[] = [];
 
   // 新規タスクの登録
   for (const extracted of result.newTasks) {
@@ -39,6 +42,7 @@ async function runTaskExtraction(
       dueAt: extracted.due_at ?? null,
     });
     console.log(`[Bot] タスク登録 | title: ${task.title}`);
+    registered.push(task);
   }
 
   // 完了タスクの更新
@@ -47,16 +51,19 @@ async function runTaskExtraction(
     for (const task of tasks) {
       await completeTask(supabase, task.id);
       console.log(`[Bot] タスク完了 | title: ${task.title}`);
+      completed.push(task);
     }
   }
+
+  return { registered, completed };
 }
 
 /**
  * メッセージ受信イベントのハンドラー。
  * `client.on(Events.MessageCreate, onMessageCreate)` で登録する。
  *
- * ユーザーの自動登録 → AI 返答の生成 → 会話履歴の保存 →
- * バックグラウンドでタスク抽出 を行う。
+ * ユーザーの自動登録 → タスク抽出・DB 更新 → AI 返答の生成（タスク結果を参照） →
+ * 会話履歴の保存・送信 を行う。
  */
 export async function onMessageCreate(message: Message): Promise<void> {
   if (message.author.bot) return;
@@ -79,7 +86,23 @@ export async function onMessageCreate(message: Message): Promise<void> {
     }
 
     const history = await getRecentHistory(supabase, user.id);
-    const reply = await generateChatReply(history, message.content);
+
+    // タスク抽出を先に実行し、結果を AI 返答に反映させる
+    const { registered, completed } = await runTaskExtraction(
+      supabase,
+      user,
+      message.content,
+    ).catch((error) => {
+      console.error("[Bot] タスク抽出中にエラーが発生しました:", error);
+      return { registered: [] as TaskRow[], completed: [] as TaskRow[] };
+    });
+
+    const taskContext = buildTaskContext(registered, completed);
+    const reply = await generateChatReply(
+      history,
+      message.content,
+      taskContext,
+    );
 
     await saveConversation(supabase, {
       userId: user.id,
@@ -94,11 +117,6 @@ export async function onMessageCreate(message: Message): Promise<void> {
 
     await replyToMessage(message, reply);
     console.log(`[Bot] 返答送信 | ユーザー: ${message.author.tag}`);
-
-    // タスク抽出はチャット返答をブロックしない
-    void runTaskExtraction(supabase, user, message.content).catch((error) => {
-      console.error("[Bot] タスク抽出中にエラーが発生しました:", error);
-    });
   } catch (error) {
     console.error("[Bot] メッセージ処理中にエラーが発生しました:", error);
     await replyToMessage(message, AI_UNAVAILABLE_MESSAGE).catch(() => {});
