@@ -6,6 +6,8 @@ export const Env = {
     supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL || "URL_NOT_SET",
     supabaseAnonKey:
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "ANON_KEY_NOT_SET",
+    supabaseServiceRoleKey:
+      process.env.SUPABASE_SERVICE_ROLE_KEY || "SERVICE_ROLE_KEY_NOT_SET",
     discordBotToken:
       process.env.DISCORD_BOT_TOKEN || "DISCORD_BOT_TOKEN_NOT_SET",
   },
