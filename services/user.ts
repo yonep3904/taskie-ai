@@ -5,6 +5,7 @@ type SupabaseAdminClient = SupabaseClient<Database>;
 
 type FindOrCreateUserParams = {
   discordId: string;
+  discordUsername: string;
   displayName: string;
   avatarUrl?: string | null;
 };
@@ -43,6 +44,7 @@ export async function findOrCreateUser(
     .from("users")
     .insert({
       discord_id: params.discordId,
+      discord_username: params.discordUsername,
       display_name: params.displayName,
       avatar_url: params.avatarUrl ?? null,
     })

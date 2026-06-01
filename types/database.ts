@@ -10,22 +10,28 @@ export type Database = {
           id: string;
           discord_id: string;
           display_name: string;
+          discord_username: string;
           avatar_url: string | null;
           created_at: string;
+          updated_at: string;
         };
         Insert: {
           id?: string;
           discord_id: string;
           display_name: string;
+          discord_username: string;
           avatar_url?: string | null;
           created_at?: string;
+          updated_at?: string;
         };
         Update: {
           id?: string;
           discord_id?: string;
           display_name?: string;
+          discord_username?: string;
           avatar_url?: string | null;
           created_at?: string;
+          updated_at?: string;
         };
         Relationships: [];
       };
