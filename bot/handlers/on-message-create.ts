@@ -1,6 +1,8 @@
 import type { Message } from "discord.js";
 import { WELCOME_MESSAGE } from "@/constants/bot-messages";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { generateChatReply } from "@/services/chat";
+import { getRecentHistory, saveConversation } from "@/services/conversation";
 import { replyToMessage } from "@/services/discord/sender";
 import { findOrCreateUser } from "@/services/user";
 
@@ -8,18 +10,16 @@ import { findOrCreateUser } from "@/services/user";
  * メッセージ受信イベントのハンドラー。
  * `client.on(Events.MessageCreate, onMessageCreate)` で登録する。
  *
- * ユーザーの自動登録を行い、初回メッセージには歓迎メッセージを返す。
+ * ユーザーの自動登録 → 会話履歴の保存 → AI 返答の生成・送信 を行う。
  */
 export async function onMessageCreate(message: Message): Promise<void> {
-  // Bot 自身のメッセージは無視する
   if (message.author.bot) return;
-
-  // システムメッセージ（ピン留めなど）は無視する
   if (message.system) return;
 
   try {
     const supabase = createAdminClient();
 
+    // ユーザーを検索・自動登録
     const { user, isNew } = await findOrCreateUser(supabase, {
       discordId: message.author.id,
       discordUsername: message.author.username,
@@ -33,10 +33,27 @@ export async function onMessageCreate(message: Message): Promise<void> {
       return;
     }
 
-    // TODO: AI応答ロジックを呼び出す
-    console.log(
-      `[Bot] メッセージ受信 | ユーザー: ${message.author.tag} | 内容: ${message.content.slice(0, 50)}`,
-    );
+    // ユーザーメッセージを保存
+    await saveConversation(supabase, {
+      userId: user.id,
+      role: "user",
+      content: message.content,
+    });
+
+    // 会話履歴を取得して AI 返答を生成
+    const history = await getRecentHistory(supabase, user.id);
+    const reply = await generateChatReply(history, message.content);
+
+    // AI 返答を保存して Discord に送信
+    await saveConversation(supabase, {
+      userId: user.id,
+      role: "assistant",
+      content: reply,
+    });
+
+    await replyToMessage(message, reply);
+
+    console.log(`[Bot] 返答送信 | ユーザー: ${message.author.tag}`);
   } catch (error) {
     console.error("[Bot] メッセージ処理中にエラーが発生しました:", error);
   }
