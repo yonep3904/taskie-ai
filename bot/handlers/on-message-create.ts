@@ -33,6 +33,9 @@ export async function onMessageCreate(message: Message): Promise<void> {
       return;
     }
 
+    // 直近の会話履歴を取得（現在のメッセージを含まない状態で取得する）
+    const history = await getRecentHistory(supabase, user.id);
+
     // ユーザーメッセージを保存
     await saveConversation(supabase, {
       userId: user.id,
@@ -40,8 +43,7 @@ export async function onMessageCreate(message: Message): Promise<void> {
       content: message.content,
     });
 
-    // 会話履歴を取得して AI 返答を生成
-    const history = await getRecentHistory(supabase, user.id);
+    // AI 返答を生成（history + 現在のメッセージ を Gemini に渡す）
     const reply = await generateChatReply(history, message.content);
 
     // AI 返答を保存して Discord に送信
@@ -55,6 +57,7 @@ export async function onMessageCreate(message: Message): Promise<void> {
 
     console.log(`[Bot] 返答送信 | ユーザー: ${message.author.tag}`);
   } catch (error) {
-    console.error("[Bot] メッセージ処理中にエラーが発生しました:", error);
+    const message_ = error instanceof Error ? error.message : String(error);
+    console.error("[Bot] メッセージ処理中にエラーが発生しました:", message_);
   }
 }
