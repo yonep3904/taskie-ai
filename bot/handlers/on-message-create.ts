@@ -2,14 +2,12 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Message } from "discord.js";
 import {
   AI_UNAVAILABLE_MESSAGE,
-  buildTaskRegisteredMessage,
-  TASK_COMPLETED_MESSAGE,
   WELCOME_MESSAGE,
 } from "@/constants/bot-messages";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generateChatReply } from "@/services/chat";
 import { getRecentHistory, saveConversation } from "@/services/conversation";
-import { replyToMessage, sendToChannel } from "@/services/discord/sender";
+import { replyToMessage } from "@/services/discord/sender";
 import { extractFromMessage } from "@/services/extraction";
 import {
   completeTask,
@@ -22,15 +20,15 @@ import type { Database, UserRow } from "@/types/database";
 type SupabaseAdminClient = SupabaseClient<Database>;
 
 /**
- * タスク抽出をバックグラウンドで実行し、結果を Discord に通知する。
- * チャット返答をブロックしないよう void で呼び出す。
+ * タスク抽出をバックグラウンドで実行し、DB を更新する。
+ * 通知は行わない。チャット返答をブロックしないよう void で呼び出す。
  */
 async function runTaskExtraction(
   supabase: SupabaseAdminClient,
   user: UserRow,
-  message: Message,
+  userMessage: string,
 ): Promise<void> {
-  const result = await extractFromMessage(message.content);
+  const result = await extractFromMessage(userMessage);
 
   // 新規タスクの登録
   for (const extracted of result.newTasks) {
@@ -41,10 +39,6 @@ async function runTaskExtraction(
       dueAt: extracted.due_at ?? null,
     });
     console.log(`[Bot] タスク登録 | title: ${task.title}`);
-    await sendToChannel(
-      message.channelId,
-      buildTaskRegisteredMessage(task.title, task.due_at),
-    );
   }
 
   // 完了タスクの更新
@@ -53,10 +47,6 @@ async function runTaskExtraction(
     for (const task of tasks) {
       await completeTask(supabase, task.id);
       console.log(`[Bot] タスク完了 | title: ${task.title}`);
-      await sendToChannel(
-        message.channelId,
-        TASK_COMPLETED_MESSAGE(task.title),
-      );
     }
   }
 }
@@ -106,7 +96,7 @@ export async function onMessageCreate(message: Message): Promise<void> {
     console.log(`[Bot] 返答送信 | ユーザー: ${message.author.tag}`);
 
     // タスク抽出はチャット返答をブロックしない
-    void runTaskExtraction(supabase, user, message).catch((error) => {
+    void runTaskExtraction(supabase, user, message.content).catch((error) => {
       console.error("[Bot] タスク抽出中にエラーが発生しました:", error);
     });
   } catch (error) {
