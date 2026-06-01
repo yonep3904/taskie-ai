@@ -40,14 +40,20 @@ function isRetryableError(error: unknown): boolean {
  *
  * @param history     - 直近の会話履歴（古い順）
  * @param userMessage - ユーザーの新規メッセージ
+ * @param taskContext - 今回のタスク操作情報。null の場合はシステムプロンプトに追記しない
  * @param attempt     - 現在の試行回数（内部再帰用）
  */
 export async function generateChatReply(
   history: ConversationRow[],
   userMessage: string,
+  taskContext: string | null = null,
   attempt = 0,
 ): Promise<string> {
   const ai = getGeminiClient();
+
+  const systemInstruction = taskContext
+    ? `${CHAT_SYSTEM_PROMPT}\n\n## 今回のタスク操作\n${taskContext}`
+    : CHAT_SYSTEM_PROMPT;
 
   const contents: Content[] = [
     ...history.map(toGeminiContent),
@@ -58,7 +64,7 @@ export async function generateChatReply(
     const response = await ai.models.generateContent({
       model: GEMINI_MODEL,
       contents,
-      config: { systemInstruction: CHAT_SYSTEM_PROMPT },
+      config: { systemInstruction },
     });
 
     const text = response.text;
@@ -74,7 +80,7 @@ export async function generateChatReply(
         `[Bot] Gemini 一時エラー (試行 ${attempt + 1}/${MAX_RETRIES})。リトライします...`,
       );
       await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
-      return generateChatReply(history, userMessage, attempt + 1);
+      return generateChatReply(history, userMessage, taskContext, attempt + 1);
     }
     throw error;
   }

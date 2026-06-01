@@ -66,6 +66,46 @@ export type Database = {
           },
         ];
       };
+      tasks: {
+        Row: {
+          id: string;
+          user_id: string;
+          title: string;
+          description: string | null;
+          due_at: string | null;
+          status: "pending" | "completed" | "overdue";
+          created_at: string;
+          completed_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          title: string;
+          description?: string | null;
+          due_at?: string | null;
+          status?: "pending" | "completed" | "overdue";
+          created_at?: string;
+          completed_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          title?: string;
+          description?: string | null;
+          due_at?: string | null;
+          status?: "pending" | "completed" | "overdue";
+          created_at?: string;
+          completed_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "tasks_user_id_fkey";
+            columns: ["user_id"];
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<never, never>;
     Functions: Record<never, never>;
@@ -83,3 +123,6 @@ export type UserInsert = Database["public"]["Tables"]["users"]["Insert"];
 /** conversations テーブルの行型 */
 export type ConversationRow =
   Database["public"]["Tables"]["conversations"]["Row"];
+
+/** tasks テーブルの行型 */
+export type TaskRow = Database["public"]["Tables"]["tasks"]["Row"];
