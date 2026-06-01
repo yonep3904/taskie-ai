@@ -35,6 +35,37 @@ export type Database = {
         };
         Relationships: [];
       };
+      conversations: {
+        Row: {
+          id: string;
+          user_id: string;
+          role: "user" | "assistant";
+          content: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          role: "user" | "assistant";
+          content: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          role?: "user" | "assistant";
+          content?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "conversations_user_id_fkey";
+            columns: ["user_id"];
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<never, never>;
     Functions: Record<never, never>;
@@ -48,3 +79,7 @@ export type UserRow = Database["public"]["Tables"]["users"]["Row"];
 
 /** users テーブルの INSERT 型 */
 export type UserInsert = Database["public"]["Tables"]["users"]["Insert"];
+
+/** conversations テーブルの行型 */
+export type ConversationRow =
+  Database["public"]["Tables"]["conversations"]["Row"];

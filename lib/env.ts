@@ -10,6 +10,7 @@ export const Env = {
       process.env.SUPABASE_SERVICE_ROLE_KEY || "SERVICE_ROLE_KEY_NOT_SET",
     discordBotToken:
       process.env.DISCORD_BOT_TOKEN || "DISCORD_BOT_TOKEN_NOT_SET",
+    geminiApiKey: process.env.GEMINI_API_KEY || "GEMINI_API_KEY_NOT_SET",
   },
   env: {
     state: process.env.NODE_ENV,
