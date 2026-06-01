@@ -15,3 +15,10 @@ export function getSupabaseBrowserConfig(): SupabaseBrowserConfig {
     anonKey: Env.api.supabaseAnonKey,
   };
 }
+
+/**
+ * Supabase Auth の OAuth callback URL を組み立てる。
+ */
+export function getAuthCallbackUrl(): string {
+  return `${cleanUrl(Env.meta.siteUrl)}/auth/callback`;
+}
