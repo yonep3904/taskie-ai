@@ -6,6 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "bot:dev": "tsx watch --env-file .env.local bot/index.ts",
+    "bot:start": "tsx --env-file .env.local bot/index.ts",
     "typecheck": "tsc --noEmit",
     "lint": "biome lint --write",
     "lint:check": "biome lint",
@@ -38,6 +40,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "tailwindcss": "^4",
+    "tsx": "^4.19.4",
     "typescript": "^5"
   }
 }
