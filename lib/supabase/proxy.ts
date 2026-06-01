@@ -1,6 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
-import { getSupabaseBrowserConfig } from "@/lib/supabase/config";
+import { getSupabasePublicConfig } from "@/lib/supabase/config";
 
 /**
  * Supabase Auth の Cookie セッションをリクエストごとに更新する。
@@ -9,7 +9,7 @@ export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({
     request,
   });
-  const { anonKey, url } = getSupabaseBrowserConfig();
+  const { anonKey, url } = getSupabasePublicConfig();
 
   const supabase = createServerClient(url, anonKey, {
     cookies: {

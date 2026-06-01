@@ -9,7 +9,7 @@ type SupabaseBrowserConfig = {
 /**
  * Supabase の公開設定を取得する。
  */
-export function getSupabaseBrowserConfig(): SupabaseBrowserConfig {
+export function getSupabasePublicConfig(): SupabaseBrowserConfig {
   return {
     url: cleanUrl(Env.api.supabaseUrl),
     anonKey: Env.api.supabaseAnonKey,

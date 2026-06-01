@@ -1,12 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { getSupabaseBrowserConfig } from "@/lib/supabase/config";
+import { getSupabasePublicConfig } from "@/lib/supabase/config";
 
 /**
  * Server Component / Route Handler / Server Action から利用する Supabase Client を作成する。
  */
 export async function createClient() {
-  const { anonKey, url } = getSupabaseBrowserConfig();
+  const { anonKey, url } = getSupabasePublicConfig();
   const cookieStore = await cookies();
 
   return createServerClient(url, anonKey, {
