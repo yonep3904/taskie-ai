@@ -1,6 +1,6 @@
 import type { Content } from "@google/genai";
+import { CHAT_SYSTEM_PROMPT } from "@/constants/prompts";
 import { GEMINI_MODEL, getGeminiClient } from "@/lib/ai/gemini";
-import { CHAT_SYSTEM_PROMPT } from "@/lib/ai/prompts";
 import type { Database } from "@/types/database";
 
 type ConversationRow = Database["public"]["Tables"]["conversations"]["Row"];
