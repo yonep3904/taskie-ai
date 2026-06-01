@@ -1,27 +1,44 @@
-/** users テーブルの行 */
-export type UserRow = {
-  id: string;
-  discord_id: string;
-  display_name: string;
-  avatar_url: string | null;
-  created_at: string;
-};
-
-/** users テーブルへの INSERT 型 */
-export type UserInsert = Omit<UserRow, "id" | "created_at"> & {
-  id?: string;
-  created_at?: string;
-};
-
-/** Supabase クライアントに渡すデータベーススキーマ型 */
+/**
+ * Supabase の型生成ツール (supabase gen types) と同じ形式で定義する。
+ * テーブルを追加するたびにここに追記する。
+ */
 export type Database = {
   public: {
     Tables: {
       users: {
-        Row: UserRow;
-        Insert: UserInsert;
-        Update: Partial<UserInsert>;
+        Row: {
+          id: string;
+          discord_id: string;
+          display_name: string;
+          avatar_url: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          discord_id: string;
+          display_name: string;
+          avatar_url?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          discord_id?: string;
+          display_name?: string;
+          avatar_url?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
       };
     };
+    Views: Record<never, never>;
+    Functions: Record<never, never>;
+    Enums: Record<never, never>;
+    CompositeTypes: Record<never, never>;
   };
 };
+
+/** users テーブルの行型 */
+export type UserRow = Database["public"]["Tables"]["users"]["Row"];
+
+/** users テーブルの INSERT 型 */
+export type UserInsert = Database["public"]["Tables"]["users"]["Insert"];
