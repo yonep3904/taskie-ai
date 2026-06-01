@@ -10,16 +10,5 @@ CREATE TABLE IF NOT EXISTS public.users (
 );
 
 -- RLS を有効化（サービスロールキーはバイパスするため Bot の操作は影響なし）
+-- RLS ポリシーは Web ダッシュボード認証実装時に追加する
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
-
--- 認証済みユーザーは自分のレコードのみ参照可能
--- Discord OAuth 後、Supabase Auth の user_metadata に provider_id として Discord ID が入る
-CREATE POLICY "users_select_own" ON public.users
-  FOR SELECT TO authenticated
-  USING (
-    discord_id = (
-      SELECT raw_user_meta_data ->> 'provider_id'
-      FROM auth.users
-      WHERE id = auth.uid()
-    )
-  );
