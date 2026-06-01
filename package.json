@@ -16,7 +16,6 @@
     "ci": "biome ci"
   },
   "dependencies": {
-    "@react-icons/all-files": "^4.1.0",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.106.2",
     "class-variance-authority": "^0.7.1",
