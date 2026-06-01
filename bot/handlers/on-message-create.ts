@@ -1,19 +1,72 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Message } from "discord.js";
 import {
   AI_UNAVAILABLE_MESSAGE,
+  buildTaskRegisteredMessage,
+  TASK_COMPLETED_MESSAGE,
   WELCOME_MESSAGE,
 } from "@/constants/bot-messages";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generateChatReply } from "@/services/chat";
 import { getRecentHistory, saveConversation } from "@/services/conversation";
-import { replyToMessage } from "@/services/discord/sender";
+import { replyToMessage, sendToChannel } from "@/services/discord/sender";
+import { extractFromMessage } from "@/services/extraction";
+import {
+  completeTask,
+  createTask,
+  findPendingTasksByTitle,
+} from "@/services/task";
 import { findOrCreateUser } from "@/services/user";
+import type { Database, UserRow } from "@/types/database";
+
+type SupabaseAdminClient = SupabaseClient<Database>;
+
+/**
+ * タスク抽出をバックグラウンドで実行し、結果を Discord に通知する。
+ * チャット返答をブロックしないよう void で呼び出す。
+ */
+async function runTaskExtraction(
+  supabase: SupabaseAdminClient,
+  user: UserRow,
+  message: Message,
+): Promise<void> {
+  const result = await extractFromMessage(message.content);
+
+  // 新規タスクの登録
+  for (const extracted of result.newTasks) {
+    const task = await createTask(supabase, {
+      userId: user.id,
+      title: extracted.title,
+      description: extracted.description ?? null,
+      dueAt: extracted.due_at ?? null,
+    });
+    console.log(`[Bot] タスク登録 | title: ${task.title}`);
+    await sendToChannel(
+      message.channelId,
+      buildTaskRegisteredMessage(task.title, task.due_at),
+    );
+  }
+
+  // 完了タスクの更新
+  for (const keyword of result.completedTaskTitles) {
+    const tasks = await findPendingTasksByTitle(supabase, user.id, keyword);
+    for (const task of tasks) {
+      await completeTask(supabase, task.id);
+      console.log(`[Bot] タスク完了 | title: ${task.title}`);
+      await sendToChannel(
+        message.channelId,
+        TASK_COMPLETED_MESSAGE(task.title),
+      );
+    }
+  }
+}
 
 /**
  * メッセージ受信イベントのハンドラー。
  * `client.on(Events.MessageCreate, onMessageCreate)` で登録する。
  *
- * ユーザーの自動登録 → AI 返答の生成 → 会話履歴の保存・送信 を行う。
+ * ユーザーの自動登録 → AI 返答の生成 → 会話履歴の保存 →
+ * バックグラウンドでタスク抽出 を行う。
  */
 export async function onMessageCreate(message: Message): Promise<void> {
   if (message.author.bot) return;
@@ -22,7 +75,6 @@ export async function onMessageCreate(message: Message): Promise<void> {
   try {
     const supabase = createAdminClient();
 
-    // ユーザーを検索・自動登録
     const { user, isNew } = await findOrCreateUser(supabase, {
       discordId: message.author.id,
       discordUsername: message.author.username,
@@ -36,13 +88,9 @@ export async function onMessageCreate(message: Message): Promise<void> {
       return;
     }
 
-    // 直近の会話履歴を取得（現在のメッセージを含まない状態で取得する）
     const history = await getRecentHistory(supabase, user.id);
-
-    // AI 返答を生成（成功してから保存する）
     const reply = await generateChatReply(history, message.content);
 
-    // ユーザーメッセージと AI 返答を保存して Discord に送信
     await saveConversation(supabase, {
       userId: user.id,
       role: "user",
@@ -55,11 +103,14 @@ export async function onMessageCreate(message: Message): Promise<void> {
     });
 
     await replyToMessage(message, reply);
-
     console.log(`[Bot] 返答送信 | ユーザー: ${message.author.tag}`);
+
+    // タスク抽出はチャット返答をブロックしない
+    void runTaskExtraction(supabase, user, message).catch((error) => {
+      console.error("[Bot] タスク抽出中にエラーが発生しました:", error);
+    });
   } catch (error) {
     console.error("[Bot] メッセージ処理中にエラーが発生しました:", error);
-    // ユーザーにエラーを通知（通知自体が失敗しても握りつぶす）
     await replyToMessage(message, AI_UNAVAILABLE_MESSAGE).catch(() => {});
   }
 }
