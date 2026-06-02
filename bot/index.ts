@@ -11,8 +11,9 @@ import {
   UserService,
 } from "@/services/db";
 import { createDiscordClient, DiscordSenderService } from "@/services/discord";
-import { MessageHandler } from "@/services/handler";
+import { MessageHandler, ProactiveHandler } from "@/services/handler";
 import { onReady } from "./handlers/on-ready";
+import { startScheduler } from "./scheduler";
 
 const supabase = createAdminClient();
 const aiService = new OpenAIAIService({ apiKey: Env.api.openaiApiKey });
@@ -42,7 +43,18 @@ const messageHandler = new MessageHandler(
   discordSenderService,
 );
 
+const proactiveHandler = new ProactiveHandler(
+  {},
+  userService,
+  contextService,
+  chatService,
+  discordSenderService,
+);
+
 discord.once(Events.ClientReady, onReady);
 discord.on(Events.MessageCreate, (message) => messageHandler.handle(message));
 
 await discord.login(Env.api.discordBotToken);
+
+// ログイン完了後にスケジューラーを起動（Discord クライアントが使える状態で開始）
+startScheduler(proactiveHandler);

@@ -18,6 +18,17 @@ export class UserService {
   constructor(private readonly supabaseClient: SupabaseClient<Database>) {}
 
   /**
+   * 全ユーザーを取得する。スケジューラーが全員に対して処理を行う際に使用する。
+   */
+  async findAll(): Promise<UserRow[]> {
+    const { data, error } = await this.supabaseClient.from("users").select("*");
+
+    if (error) throw error;
+
+    return data ?? [];
+  }
+
+  /**
    * Discord ID でユーザーを検索し、存在しなければ新規作成する。
    */
   async findOrCreate(params: FindOrCreateParams): Promise<FindOrCreateResult> {
