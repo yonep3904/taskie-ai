@@ -6,6 +6,7 @@ import {
   WELCOME_MESSAGE,
 } from "@/constants/bot-messages";
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { AIService } from "@/services/ai/ai-service";
 import { generateChatReply } from "@/services/chat";
 import { getRecentHistory, saveConversation } from "@/services/conversation";
 import { replyToMessage } from "@/services/discord/sender";
@@ -25,11 +26,16 @@ type SupabaseAdminClient = SupabaseClient<Database>;
  * 返却値は AI 返答のコンテキストとして使用する。
  */
 async function runTaskExtraction(
+  ai: AIService,
   supabase: SupabaseAdminClient,
   user: UserRow,
   userMessage: string,
 ): Promise<{ registered: TaskRow[]; completed: TaskRow[] }> {
-  const result = await extractFromMessage(userMessage);
+  const result = await extractFromMessage(ai, userMessage);
+  console.log(
+    `[Bot] 抽出結果 | newTasks: ${result.newTasks.length}, completed: ${result.completedTaskTitles.length}`,
+  );
+
   const registered: TaskRow[] = [];
   const completed: TaskRow[] = [];
 
@@ -59,66 +65,72 @@ async function runTaskExtraction(
 }
 
 /**
- * メッセージ受信イベントのハンドラー。
- * `client.on(Events.MessageCreate, onMessageCreate)` で登録する。
+ * メッセージ受信イベントのハンドラーを生成するファクトリ関数。
+ * `client.on(Events.MessageCreate, createMessageHandler(ai))` で登録する。
  *
  * ユーザーの自動登録 → タスク抽出・DB 更新 → AI 返答の生成（タスク結果を参照） →
  * 会話履歴の保存・送信 を行う。
+ *
+ * @param ai - 使用する AI サービス
  */
-export async function onMessageCreate(message: Message): Promise<void> {
-  if (message.author.bot) return;
-  if (message.system) return;
+export function createMessageHandler(ai: AIService) {
+  return async function onMessageCreate(message: Message): Promise<void> {
+    if (message.author.bot) return;
+    if (message.system) return;
 
-  try {
-    const supabase = createAdminClient();
+    try {
+      const supabase = createAdminClient();
 
-    const { user, isNew } = await findOrCreateUser(supabase, {
-      discordId: message.author.id,
-      discordUsername: message.author.username,
-      displayName: message.author.displayName,
-      avatarUrl: message.author.displayAvatarURL(),
-    });
+      const { user, isNew } = await findOrCreateUser(supabase, {
+        discordId: message.author.id,
+        discordUsername: message.author.username,
+        displayName: message.author.displayName,
+        avatarUrl: message.author.displayAvatarURL(),
+      });
 
-    if (isNew) {
-      console.log(`[Bot] ユーザー登録 | discord_id: ${user.discord_id}`);
-      await replyToMessage(message, WELCOME_MESSAGE);
-      return;
+      if (isNew) {
+        console.log(`[Bot] ユーザー登録 | discord_id: ${user.discord_id}`);
+        await replyToMessage(message, WELCOME_MESSAGE);
+        return;
+      }
+
+      const history = await getRecentHistory(supabase, user.id);
+
+      // タスク抽出を先に実行し、結果を AI 返答に反映させる
+      const { registered, completed } = await runTaskExtraction(
+        ai,
+        supabase,
+        user,
+        message.content,
+      ).catch((error) => {
+        console.error("[Bot] タスク抽出中にエラーが発生しました:", error);
+        return { registered: [] as TaskRow[], completed: [] as TaskRow[] };
+      });
+
+      const taskContext = buildTaskContext(registered, completed);
+      const reply = await generateChatReply(
+        ai,
+        history,
+        message.content,
+        taskContext,
+      );
+
+      await saveConversation(supabase, {
+        userId: user.id,
+        role: "user",
+        content: message.content,
+      });
+      await saveConversation(supabase, {
+        userId: user.id,
+        role: "assistant",
+        content: reply,
+      });
+
+      await replyToMessage(message, reply);
+      console.log(`[Bot] 返答送信 | ユーザー: ${message.author.tag}`);
+    } catch (error) {
+      console.error("[Bot] メッセージ処理中にエラーが発生しました:", error);
+      await replyToMessage(message, AI_UNAVAILABLE_MESSAGE).catch(() => {});
     }
-
-    const history = await getRecentHistory(supabase, user.id);
-
-    // タスク抽出を先に実行し、結果を AI 返答に反映させる
-    const { registered, completed } = await runTaskExtraction(
-      supabase,
-      user,
-      message.content,
-    ).catch((error) => {
-      console.error("[Bot] タスク抽出中にエラーが発生しました:", error);
-      return { registered: [] as TaskRow[], completed: [] as TaskRow[] };
-    });
-
-    const taskContext = buildTaskContext(registered, completed);
-    const reply = await generateChatReply(
-      history,
-      message.content,
-      taskContext,
-    );
-
-    await saveConversation(supabase, {
-      userId: user.id,
-      role: "user",
-      content: message.content,
-    });
-    await saveConversation(supabase, {
-      userId: user.id,
-      role: "assistant",
-      content: reply,
-    });
-
-    await replyToMessage(message, reply);
-    console.log(`[Bot] 返答送信 | ユーザー: ${message.author.tag}`);
-  } catch (error) {
-    console.error("[Bot] メッセージ処理中にエラーが発生しました:", error);
-    await replyToMessage(message, AI_UNAVAILABLE_MESSAGE).catch(() => {});
-  }
+  };
 }

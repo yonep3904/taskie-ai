@@ -1,7 +1,5 @@
-import type { Schema } from "@google/genai";
-import { Type } from "@google/genai";
 import { EXTRACTION_SYSTEM_PROMPT } from "@/constants/prompts";
-import { GEMINI_MODEL, getGeminiClient } from "@/lib/ai/gemini";
+import type { AIMessage, AIService } from "@/services/ai/ai-service";
 
 /** 抽出された新規タスク */
 type ExtractedTask = {
@@ -16,25 +14,29 @@ export type ExtractionResult = {
   completedTaskTitles: string[];
 };
 
-/** Gemini に渡すレスポンススキーマ */
-const EXTRACTION_SCHEMA: Schema = {
-  type: Type.OBJECT,
+/**
+ * レスポンスの JSON スキーマ。
+ * type は Gemini の Schema 形式（大文字）で記述する。
+ * OpenAI 実装では schema 引数は使用されない。
+ */
+const EXTRACTION_SCHEMA: Record<string, unknown> = {
+  type: "OBJECT",
   properties: {
     newTasks: {
-      type: Type.ARRAY,
+      type: "ARRAY",
       items: {
-        type: Type.OBJECT,
+        type: "OBJECT",
         properties: {
-          title: { type: Type.STRING },
-          description: { type: Type.STRING },
-          due_at: { type: Type.STRING, nullable: true },
+          title: { type: "STRING" },
+          description: { type: "STRING" },
+          due_at: { type: "STRING", nullable: true },
         },
         required: ["title"],
       },
     },
     completedTaskTitles: {
-      type: Type.ARRAY,
-      items: { type: Type.STRING },
+      type: "ARRAY",
+      items: { type: "STRING" },
     },
   },
   required: ["newTasks", "completedTaskTitles"],
@@ -48,43 +50,32 @@ const EMPTY_RESULT: ExtractionResult = {
 /**
  * ユーザーメッセージから新規タスクと完了タスクを抽出する。
  *
+ * @param ai          - 使用する AI サービス
  * @param userMessage - 解析対象のユーザーメッセージ
  * @returns 抽出結果。解析失敗時は空の結果を返す
  */
 export async function extractFromMessage(
+  ai: AIService,
   userMessage: string,
 ): Promise<ExtractionResult> {
-  const ai = getGeminiClient();
   const now = new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
 
-  const contents = [
+  const messages: AIMessage[] = [
     {
-      role: "user" as const,
-      parts: [
-        {
-          text: `以下のメッセージを解析してください。\n\n現在日時: ${now}\n\nメッセージ:\n${userMessage}`,
-        },
-      ],
+      role: "user",
+      content: `以下のメッセージを解析してください。\n\n現在日時: ${now}\n\nメッセージ:\n${userMessage}`,
     },
   ];
 
   try {
-    const response = await ai.models.generateContent({
-      model: GEMINI_MODEL,
-      contents,
-      config: {
-        systemInstruction: EXTRACTION_SYSTEM_PROMPT,
-        responseMimeType: "application/json",
-        responseSchema: EXTRACTION_SCHEMA,
-      },
-    });
-
-    const text = response.text;
-    if (!text) return EMPTY_RESULT;
-
-    return JSON.parse(text) as ExtractionResult;
-  } catch {
+    return await ai.generateJSON<ExtractionResult>(
+      messages,
+      EXTRACTION_SYSTEM_PROMPT,
+      EXTRACTION_SCHEMA,
+    );
+  } catch (error) {
     // 抽出失敗はチャット応答に影響させない
+    console.error("[Extraction] タスク抽出中にエラーが発生しました:", error);
     return EMPTY_RESULT;
   }
 }
