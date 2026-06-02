@@ -1,5 +1,4 @@
 import { Client, GatewayIntentBits, Partials } from "discord.js";
-import { Env } from "@/lib/env";
 
 /**
  * 必要な Gateway Intents。
@@ -19,26 +18,12 @@ const BOT_INTENTS = [
  */
 const BOT_PARTIALS = [Partials.Channel, Partials.Message] as const;
 
-let _client: Client | null = null;
-
 /**
- * Discord クライアントのシングルトンを返す。
- * 初回呼び出し時にインスタンスを生成する。
+ * Bot 用の Discord クライアントを生成して返す。
  */
-export function getDiscordClient(): Client {
-  if (!_client) {
-    _client = new Client({
-      intents: [...BOT_INTENTS],
-      partials: [...BOT_PARTIALS],
-    });
-  }
-  return _client;
-}
-
-/**
- * Bot トークンを使って Discord にログインする。
- */
-export async function loginDiscordClient(): Promise<void> {
-  const client = getDiscordClient();
-  await client.login(Env.api.discordBotToken);
+export function createDiscordClient(): Client {
+  return new Client({
+    intents: [...BOT_INTENTS],
+    partials: [...BOT_PARTIALS],
+  });
 }
