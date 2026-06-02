@@ -1,5 +1,6 @@
 import { EXTRACTION_SYSTEM_PROMPT } from "@/constants/prompts";
 import type { AIMessage, AIService } from "@/services/ai";
+import type { MemoryImportance } from "@/types/database";
 
 /** 抽出された新規タスク */
 type ExtractedTask = {
@@ -8,10 +9,17 @@ type ExtractedTask = {
   due_at?: string | null;
 };
 
+/** 抽出された長期記憶 */
+export type ExtractedMemory = {
+  content: string;
+  importance: MemoryImportance;
+};
+
 /** Extraction AI の出力型 */
 export type ExtractionResult = {
   newTasks: ExtractedTask[];
   completedTaskTitles: string[];
+  memories: ExtractedMemory[];
 };
 
 /**
@@ -38,13 +46,25 @@ const EXTRACTION_SCHEMA: Record<string, unknown> = {
       type: "ARRAY",
       items: { type: "STRING" },
     },
+    memories: {
+      type: "ARRAY",
+      items: {
+        type: "OBJECT",
+        properties: {
+          content: { type: "STRING" },
+          importance: { type: "STRING" },
+        },
+        required: ["content", "importance"],
+      },
+    },
   },
-  required: ["newTasks", "completedTaskTitles"],
+  required: ["newTasks", "completedTaskTitles", "memories"],
 };
 
 const EMPTY_RESULT: ExtractionResult = {
   newTasks: [],
   completedTaskTitles: [],
+  memories: [],
 };
 
 export class ExtractionService {
