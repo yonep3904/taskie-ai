@@ -13,7 +13,7 @@ const supabase = createAdminClient();
 const aiService = new OpenAIAIService({ apiKey: Env.api.openaiApiKey });
 
 const userService = new UserService(supabase);
-const conversationService = new ConversationService(supabase);
+const conversationService = new ConversationService({}, supabase);
 const taskService = new TaskService(supabase);
 const extractionService = new ExtractionService(aiService);
 const chatService = new ChatService(aiService);

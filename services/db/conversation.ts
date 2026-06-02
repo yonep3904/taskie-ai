@@ -1,14 +1,26 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
+import { createConfig, type DefaultConfig } from "@/utils/create-config";
 
 type ConversationRow = Database["public"]["Tables"]["conversations"]["Row"];
 type ConversationRole = ConversationRow["role"];
 
-/** 取得する会話履歴の最大件数 */
-const HISTORY_LIMIT = 20;
+interface ConversationServiceConfig {
+  historyLimit?: number;
+}
 
 export class ConversationService {
-  constructor(private readonly supabaseClient: SupabaseClient<Database>) {}
+  private static readonly DEFAULTS: DefaultConfig<ConversationServiceConfig> = {
+    historyLimit: 20,
+  };
+  private readonly config: Required<ConversationServiceConfig>;
+
+  constructor(
+    config: ConversationServiceConfig,
+    private readonly supabaseClient: SupabaseClient<Database>,
+  ) {
+    this.config = createConfig(config, ConversationService.DEFAULTS);
+  }
 
   /**
    * 会話を1件保存する。
@@ -31,13 +43,16 @@ export class ConversationService {
    * ユーザーの直近の会話履歴を取得する。
    * AI に渡すコンテキストとして使用する。
    */
-  async getRecentHistory(userId: string): Promise<ConversationRow[]> {
+  async getRecentHistory(
+    userId: string,
+    limit?: number,
+  ): Promise<ConversationRow[]> {
     const { data, error } = await this.supabaseClient
       .from("conversations")
       .select("*")
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
-      .limit(HISTORY_LIMIT);
+      .limit(limit ?? this.config.historyLimit);
 
     if (error) throw error;
 
