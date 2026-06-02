@@ -4,14 +4,13 @@ import {
   buildTaskContext,
   WELCOME_MESSAGE,
 } from "@/constants/bot-messages";
-import type { ChatService } from "@/services/chat";
+import type { ChatService, ExtractionService } from "@/services/chat";
 import type {
   ConversationService,
   TaskService,
   UserService,
 } from "@/services/db";
 import type { DiscordSenderService } from "@/services/discord";
-import type { ExtractionService } from "@/services/extraction";
 import type { TaskRow, UserRow } from "@/types/database";
 
 export class MessageHandler {
@@ -66,8 +65,7 @@ export class MessageHandler {
   }
 
   /**
-   * MessageCreate イベントのハンドラー。
-   * `client.on(Events.MessageCreate, (msg) => handler.handle(msg))` で登録する。
+   * Discord の MessageCreate イベントを処理する。
    *
    * ユーザーの自動登録 → タスク抽出・DB 更新 → AI 返答の生成（タスク結果を参照） →
    * 会話履歴の保存・送信 を行う。
