@@ -34,6 +34,22 @@ export class TaskService {
   }
 
   /**
+   * ユーザーの全 pending タスクを締切昇順（null は末尾）で返す。
+   */
+  async findPending(userId: string): Promise<TaskRow[]> {
+    const { data, error } = await this.supabaseClient
+      .from("tasks")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("status", "pending")
+      .order("due_at", { ascending: true, nullsFirst: false });
+
+    if (error) throw error;
+
+    return data ?? [];
+  }
+
+  /**
    * タイトルの部分一致でユーザーの pending タスクを検索する。
    */
   async findPendingByTitle(
