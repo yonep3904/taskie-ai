@@ -12,6 +12,7 @@ export const Env = {
       process.env.DISCORD_BOT_TOKEN || "DISCORD_BOT_TOKEN_NOT_SET",
     geminiApiKey: process.env.GEMINI_API_KEY || "GEMINI_API_KEY_NOT_SET",
     openaiApiKey: process.env.OPENAI_API_KEY || "OPENAI_API_KEY_NOT_SET",
+    cronSecret: process.env.CRON_SECRET || "",
   },
   env: {
     state: process.env.NODE_ENV,
