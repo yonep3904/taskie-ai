@@ -1,4 +1,4 @@
-import { CHAT_SYSTEM_PROMPT } from "@/constants/prompts";
+import { CHAT_SYSTEM_PROMPT, PROACTIVE_SYSTEM_PROMPT } from "@/constants/prompts";
 import type { AIMessage, AIService } from "@/services/ai";
 import type { Database } from "@/types/database";
 
@@ -34,6 +34,21 @@ export class ChatService {
       { role: "user", content: userMessage },
     ];
 
+    return this.aiService.generateText(messages, systemInstruction);
+  }
+
+  /**
+   * 自発メッセージを生成する。ユーザーからの入力なしで AI が話しかける場合に使用する。
+   *
+   * @param systemAdditions - ContextService が生成したシステムプロンプト追加テキスト
+   * @param instruction     - 生成の方向性を示す内部指示（AI への隠し指示）
+   */
+  async generateMessage(
+    systemAdditions: string,
+    instruction: string,
+  ): Promise<string> {
+    const systemInstruction = PROACTIVE_SYSTEM_PROMPT + systemAdditions;
+    const messages: AIMessage[] = [{ role: "user", content: instruction }];
     return this.aiService.generateText(messages, systemInstruction);
   }
 }
