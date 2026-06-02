@@ -10,7 +10,7 @@ import {
   TaskService,
   UserService,
 } from "@/services/db";
-import { DiscordRestSender } from "@/services/discord";
+import { DiscordRestSender } from "@/services/discord/rest-sender";
 import { ProactiveHandler } from "@/services/handler";
 
 type ProactiveType = "reminder" | "random" | "both";
@@ -20,10 +20,11 @@ type RequestBody = {
 };
 
 /**
- * 自発メッセージのトリガーエンドポイント。
+ * 自発メッセージのトリガーエンドポイント。Supabase Cron からスケジュール実行される。
  *
- * テスト用途のほか、Supabase Cron から本番スケジュール実行にも利用できる。
- * `x-cron-secret` ヘッダーで認証する。
+ * - reminder: 全ユーザーの締切タスクをチェックし、該当者にのみ送信する
+ * - random: 全ユーザーに対して設定確率（デフォルト 20%）でユーザーごとに判定し送信する
+ * - both: 上記を両方実行する
  *
  * POST /api/proactive
  * Headers: x-cron-secret: <CRON_SECRET>
