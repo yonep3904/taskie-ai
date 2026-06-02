@@ -1,19 +1,25 @@
 import OpenAI from "openai";
-import { type AIMessage, AIService } from "./ai-service";
+import { createConfig, type DefaultConfig } from "@/utils/create-config";
+import type { AIMessage, AIService } from "./ai-service";
 
-const DEFAULT_MODEL = "gpt-4o";
+export interface OpenAIAIServiceConfig {
+  apiKey: string;
+  model?: string;
+}
 
 /**
  * OpenAI API を使用する AIService の実装。
  */
-export class OpenAIAIService extends AIService {
+export class OpenAIAIService implements AIService {
+  private static readonly DEFAULTS: DefaultConfig<OpenAIAIServiceConfig> = {
+    model: "gpt-4o",
+  };
+  private readonly config: Required<OpenAIAIServiceConfig>;
   private readonly client: OpenAI;
-  private readonly model: string;
 
-  constructor(apiKey: string, model = DEFAULT_MODEL) {
-    super(apiKey);
-    this.client = new OpenAI({ apiKey });
-    this.model = model;
+  constructor(config: OpenAIAIServiceConfig) {
+    this.config = createConfig(config, OpenAIAIService.DEFAULTS);
+    this.client = new OpenAI({ apiKey: this.config.apiKey });
   }
 
   /**
@@ -27,7 +33,7 @@ export class OpenAIAIService extends AIService {
       systemInstruction ? [{ role: "system", content: systemInstruction }] : [];
 
     const response = await this.client.chat.completions.create({
-      model: this.model,
+      model: this.config.model,
       messages: [
         ...systemMessages,
         ...messages.map((m) => ({
@@ -44,18 +50,21 @@ export class OpenAIAIService extends AIService {
 
   /**
    * OpenAI Chat Completions API で JSON を生成する。
-   * json_object モードで JSON 出力を強制し、スキーマへの準拠はモデルに委ねる。
-   * スキーマ引数はインターフェース互換のために受け取るが直接は使用しない。
+   * json_object モードを使用する。このモードは API の要件として
+   * システムプロンプトに "json" という単語が含まれている必要があるため、
+   * systemInstruction に JSON 出力の指示を自動で追記する。
    */
   async generateJSON<T>(
     messages: AIMessage[],
     systemInstruction: string,
     _schema: Record<string, unknown>,
   ): Promise<T> {
+    const systemWithJson = `${systemInstruction}\n\n必ずJSON形式で応答してください。`;
+
     const response = await this.client.chat.completions.create({
-      model: this.model,
+      model: this.config.model,
       messages: [
-        { role: "system", content: systemInstruction },
+        { role: "system", content: systemWithJson },
         ...messages.map((m) => ({
           role: m.role,
           content: m.content,

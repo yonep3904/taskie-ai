@@ -1,4 +1,3 @@
-import { Type } from "@google/genai";
 import { EXTRACTION_SYSTEM_PROMPT } from "@/constants/prompts";
 import type { AIMessage, AIService } from "@/lib/ai/ai-service";
 
@@ -15,25 +14,29 @@ export type ExtractionResult = {
   completedTaskTitles: string[];
 };
 
-/** レスポンスの JSON スキーマ（Gemini 互換形式） */
+/**
+ * レスポンスの JSON スキーマ。
+ * type は Gemini の Schema 形式（大文字）で記述する。
+ * OpenAI 実装では schema 引数は使用されない。
+ */
 const EXTRACTION_SCHEMA: Record<string, unknown> = {
-  type: Type.OBJECT,
+  type: "OBJECT",
   properties: {
     newTasks: {
-      type: Type.ARRAY,
+      type: "ARRAY",
       items: {
-        type: Type.OBJECT,
+        type: "OBJECT",
         properties: {
-          title: { type: Type.STRING },
-          description: { type: Type.STRING },
-          due_at: { type: Type.STRING, nullable: true },
+          title: { type: "STRING" },
+          description: { type: "STRING" },
+          due_at: { type: "STRING", nullable: true },
         },
         required: ["title"],
       },
     },
     completedTaskTitles: {
-      type: Type.ARRAY,
-      items: { type: Type.STRING },
+      type: "ARRAY",
+      items: { type: "STRING" },
     },
   },
   required: ["newTasks", "completedTaskTitles"],

@@ -1,29 +1,33 @@
 import type { Content, Schema } from "@google/genai";
 import { GoogleGenAI } from "@google/genai";
-import { type AIMessage, AIService } from "./ai-service";
-
-const DEFAULT_MODEL = "gemini-2.5-flash";
+import { createConfig, type DefaultConfig } from "@/utils/create-config";
+import type { AIMessage, AIService } from "./ai-service";
 
 /** リトライ対象の HTTP ステータスコード（一時的な過負荷・レート制限） */
 const RETRYABLE_STATUSES = new Set([429, 503]);
 
-/** リトライ間隔（ミリ秒） */
-const RETRY_DELAY_MS = 1500;
-
-/** 最大リトライ回数 */
-const MAX_RETRIES = 2;
+export interface GeminiAIServiceConfig {
+  apiKey: string;
+  model?: string;
+  retryDelayMs?: number;
+  maxRetries?: number;
+}
 
 /**
  * Gemini API を使用する AIService の実装。
  */
-export class GeminiAIService extends AIService {
+export class GeminiAIService implements AIService {
+  private static readonly DEFAULTS: DefaultConfig<GeminiAIServiceConfig> = {
+    model: "gemini-2.5-flash",
+    retryDelayMs: 1500,
+    maxRetries: 2,
+  };
+  private readonly config: Required<GeminiAIServiceConfig>;
   private readonly client: GoogleGenAI;
-  private readonly model: string;
 
-  constructor(apiKey: string, model = DEFAULT_MODEL) {
-    super(apiKey);
-    this.client = new GoogleGenAI({ apiKey });
-    this.model = model;
+  constructor(config: GeminiAIServiceConfig) {
+    this.config = createConfig(config, GeminiAIService.DEFAULTS);
+    this.client = new GoogleGenAI({ apiKey: this.config.apiKey });
   }
 
   private toContent(message: AIMessage): Content {
@@ -42,17 +46,14 @@ export class GeminiAIService extends AIService {
     );
   }
 
-  /**
-   * Gemini でテキストを生成する。503/429 エラーは最大 MAX_RETRIES 回リトライする。
-   */
-  async generateText(
+  private async generateTextWithRetry(
     messages: AIMessage[],
-    systemInstruction?: string,
-    attempt = 0,
+    systemInstruction: string | undefined,
+    attempt: number,
   ): Promise<string> {
     try {
       const response = await this.client.models.generateContent({
-        model: this.model,
+        model: this.config.model,
         contents: messages.map((m) => this.toContent(m)),
         config: systemInstruction ? { systemInstruction } : undefined,
       });
@@ -60,21 +61,37 @@ export class GeminiAIService extends AIService {
       const text = response.text;
       if (!text) throw new Error("Gemini から空のレスポンスが返されました");
       return text;
-    } catch (error) {
-      if (attempt < MAX_RETRIES && this.isRetryable(error)) {
+    } catch (error: unknown) {
+      if (attempt < this.config.maxRetries && this.isRetryable(error)) {
         console.warn(
-          `[Gemini] 一時エラー (試行 ${attempt + 1}/${MAX_RETRIES})。リトライします...`,
+          `[Gemini] 一時エラー (試行 ${attempt + 1}/${this.config.maxRetries})。リトライします...`,
         );
-        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
-        return this.generateText(messages, systemInstruction, attempt + 1);
+        await new Promise((resolve) =>
+          setTimeout(resolve, this.config.retryDelayMs),
+        );
+        return this.generateTextWithRetry(
+          messages,
+          systemInstruction,
+          attempt + 1,
+        );
       }
       throw error;
     }
   }
 
   /**
+   * Gemini でテキストを生成する。503/429 エラーは最大 maxRetries 回リトライする。
+   */
+  async generateText(
+    messages: AIMessage[],
+    systemInstruction?: string,
+  ): Promise<string> {
+    return this.generateTextWithRetry(messages, systemInstruction, 0);
+  }
+
+  /**
    * Gemini の構造化出力機能で JSON を生成する。
-   * schema は Gemini の Schema 形式で渡す。
+   * schema は Gemini の Schema 形式（type は大文字）で渡すこと。
    */
   async generateJSON<T>(
     messages: AIMessage[],
@@ -82,7 +99,7 @@ export class GeminiAIService extends AIService {
     schema: Record<string, unknown>,
   ): Promise<T> {
     const response = await this.client.models.generateContent({
-      model: this.model,
+      model: this.config.model,
       contents: messages.map((m) => this.toContent(m)),
       config: {
         systemInstruction,

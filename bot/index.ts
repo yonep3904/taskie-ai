@@ -9,7 +9,7 @@ import { createMessageHandler } from "./handlers/on-message-create";
 import { onReady } from "./handlers/on-ready";
 
 const client = getDiscordClient();
-const ai = new GeminiAIService(Env.api.geminiApiKey);
+const ai = new GeminiAIService({ apiKey: Env.api.geminiApiKey });
 
 client.once(Events.ClientReady, onReady);
 client.on(Events.MessageCreate, createMessageHandler(ai));
