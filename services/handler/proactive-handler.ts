@@ -1,7 +1,7 @@
 import type { ChatService } from "@/services/chat";
 import type { ContextService } from "@/services/chat/context";
 import type { UserService } from "@/services/db";
-import type { DiscordSenderService } from "@/services/discord";
+import type { DirectMessageSender } from "@/services/discord";
 import type { UserRow } from "@/types/database";
 import { createConfig, type DefaultConfig } from "@/utils/create-config";
 
@@ -28,7 +28,7 @@ export class ProactiveHandler {
     private readonly userService: UserService,
     private readonly contextService: ContextService,
     private readonly chatService: ChatService,
-    private readonly discordSenderService: DiscordSenderService,
+    private readonly discordSenderService: DirectMessageSender,
   ) {
     this.config = createConfig(config, ProactiveHandler.DEFAULTS);
   }

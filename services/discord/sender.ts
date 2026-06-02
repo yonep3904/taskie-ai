@@ -5,6 +5,15 @@ import type { BaseMessageOptions, Client, Message } from "discord.js";
  */
 export type MessageContent = string | BaseMessageOptions;
 
+/**
+ * DM 送信機能のインターフェース。
+ * WebSocket クライアント版（DiscordSenderService）と REST 版（DiscordRestSender）
+ * の両方がこれを満たす。ProactiveHandler はこちらを受け取る。
+ */
+export interface DirectMessageSender {
+  sendDM(userId: string, content: MessageContent): Promise<unknown>;
+}
+
 export class DiscordSenderService {
   constructor(private readonly client: Client) {}
 
