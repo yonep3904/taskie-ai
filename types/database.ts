@@ -106,6 +106,40 @@ export type Database = {
           },
         ];
       };
+      memories: {
+        Row: {
+          id: string;
+          user_id: string;
+          content: string;
+          importance: "high" | "medium" | "low";
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          content: string;
+          importance?: "high" | "medium" | "low";
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          content?: string;
+          importance?: "high" | "medium" | "low";
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "memories_user_id_fkey";
+            columns: ["user_id"];
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<never, never>;
     Functions: Record<never, never>;
@@ -126,3 +160,9 @@ export type ConversationRow =
 
 /** tasks テーブルの行型 */
 export type TaskRow = Database["public"]["Tables"]["tasks"]["Row"];
+
+/** memories テーブルの行型 */
+export type MemoryRow = Database["public"]["Tables"]["memories"]["Row"];
+
+/** memories テーブルの importance 型 */
+export type MemoryImportance = MemoryRow["importance"];

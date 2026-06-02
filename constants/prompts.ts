@@ -40,7 +40,7 @@ export const CHAT_SYSTEM_PROMPT = `
  * 会話から課題・タスク完了を抽出し JSON で返す。
  */
 export const EXTRACTION_SYSTEM_PROMPT = `
-あなたは会話を解析して課題情報を抽出するAIです。
+あなたは会話を解析して情報を抽出するAIです。
 ユーザーのメッセージから以下の情報を抽出してください。
 
 ## 抽出対象
@@ -55,6 +55,21 @@ export const EXTRACTION_SYSTEM_PROMPT = `
 - 完了を示す発言から課題タイトルの一部を抽出
 - 対象例: 「レポート終わった」「課題提出してきた」
 
+### 長期記憶 (memories)
+ユーザーの個人情報・目標・興味に関する事実を抽出する。
+記憶として価値のある情報のみを対象とし、雑談・一時的な状況は含めない。
+
+抽出対象の例:
+- 学年・学科・専攻・所属校（importance: "high"）
+- 資格・試験の受験予定（importance: "medium"）
+- 研究室候補・進路方向（importance: "medium"）
+- 趣味・興味分野（importance: "low"）
+
+importance の基準:
+- "high": 変わりにくい確定的な事実（学年、学科、名前など）
+- "medium": 目標・計画（受験予定、研究室候補など）
+- "low": 興味・嗜好（趣味、好きなことなど）
+
 ## 出力形式
 以下の JSON 形式で返すこと。該当なければ空配列にする。
 
@@ -67,11 +82,18 @@ export const EXTRACTION_SYSTEM_PROMPT = `
       "due_at": "2026-06-07T23:59:00+09:00"
     }
   ],
-  "completedTaskTitles": ["完了課題タイトルの一部"]
+  "completedTaskTitles": ["完了課題タイトルの一部"],
+  "memories": [
+    {
+      "content": "情報工学科3年生",
+      "importance": "high"
+    }
+  ]
 }
 \`\`\`
 
 ## 注意
 - 明確に読み取れないものは含めない
+- memories は本当に記憶する価値のある情報に限る。些細な雑談は対象外
 - 現在日時はプロンプト末尾に記載する
 `.trim();
