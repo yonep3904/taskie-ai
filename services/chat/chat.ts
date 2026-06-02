@@ -1,6 +1,6 @@
 import { CHAT_SYSTEM_PROMPT } from "@/constants/prompts";
 import type { AIMessage, AIService } from "@/services/ai";
-import type { Database } from "@/types/database";
+import type { Database, TaskRow } from "@/types/database";
 
 type ConversationRow = Database["public"]["Tables"]["conversations"]["Row"];
 
@@ -37,5 +37,37 @@ export class ChatService {
     ];
 
     return this.aiService.generateText(messages, systemInstruction);
+  }
+
+  /**
+   * タスク操作の結果を AI に渡すコンテキスト文字列を生成する。
+   * 操作がない場合は null を返す。
+   *
+   * @param registered - 今回登録されたタスクの一覧
+   * @param completed  - 今回完了になったタスクの一覧
+   */
+  buildTaskContext(registered: TaskRow[], completed: TaskRow[]): string | null {
+    if (registered.length === 0 && completed.length === 0) return null;
+
+    const lines: string[] = [];
+
+    for (const task of registered) {
+      const due = task.due_at
+        ? `締切: ${new Date(task.due_at).toLocaleString("ja-JP", {
+            timeZone: "Asia/Tokyo",
+            month: "long",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          })}`
+        : "締切未設定";
+      lines.push(`新規登録: 「${task.title}」（${due}）`);
+    }
+
+    for (const task of completed) {
+      lines.push(`完了: 「${task.title}」`);
+    }
+
+    return lines.join("\n");
   }
 }

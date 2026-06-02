@@ -1,7 +1,6 @@
 import type { Message } from "discord.js";
 import {
   AI_UNAVAILABLE_MESSAGE,
-  buildTaskContext,
   WELCOME_MESSAGE,
 } from "@/constants/bot-messages";
 import type { ChatService, ExtractionService } from "@/services/chat";
@@ -102,7 +101,10 @@ export class MessageHandler {
         return { registered: [] as TaskRow[], completed: [] as TaskRow[] };
       });
 
-      const taskContext = buildTaskContext(registered, completed);
+      const taskContext = this.chatService.buildTaskContext(
+        registered,
+        completed,
+      );
       const reply = await this.chatService.generateReply(
         history,
         message.content,
