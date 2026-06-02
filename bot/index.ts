@@ -3,7 +3,7 @@ import { Env } from "@/lib/env";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { OpenAIAIService } from "@/services/ai";
 import { ChatService, ExtractionService } from "@/services/chat";
-import { ContextService } from "@/services/context";
+import { ContextService } from "@/services/chat/context";
 import {
   ConversationService,
   MemoryService,

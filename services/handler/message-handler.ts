@@ -3,8 +3,7 @@ import {
   AI_UNAVAILABLE_MESSAGE,
   WELCOME_MESSAGE,
 } from "@/constants/bot-messages";
-import type { ChatService } from "@/services/chat";
-import type { ContextService } from "@/services/context";
+import type { ChatService, ContextService } from "@/services/chat";
 import type { ConversationService, UserService } from "@/services/db";
 import type { DiscordSenderService } from "@/services/discord";
 

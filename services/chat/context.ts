@@ -1,5 +1,9 @@
 import type { ExtractionService } from "@/services/chat";
-import type { ConversationService, MemoryService, TaskService } from "@/services/db";
+import type {
+  ConversationService,
+  MemoryService,
+  TaskService,
+} from "@/services/db";
 import type {
   ConversationRow,
   MemoryRow,
