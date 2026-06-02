@@ -5,11 +5,13 @@ import {
   WELCOME_MESSAGE,
 } from "@/constants/bot-messages";
 import type { ChatService } from "@/services/chat";
-import type { ConversationService } from "@/services/conversation";
-import type { DiscordSenderService } from "@/services/discord/sender";
+import type {
+  ConversationService,
+  TaskService,
+  UserService,
+} from "@/services/db";
+import type { DiscordSenderService } from "@/services/discord";
 import type { ExtractionService } from "@/services/extraction";
-import type { TaskService } from "@/services/task";
-import type { UserService } from "@/services/user";
 import type { TaskRow, UserRow } from "@/types/database";
 
 export class MessageHandler {

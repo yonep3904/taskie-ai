@@ -1,14 +1,11 @@
 import { Events } from "discord.js";
 import { Env } from "@/lib/env";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { OpenAIAIService } from "@/services/ai/openai";
+import { OpenAIAIService } from "@/services/ai";
 import { ChatService } from "@/services/chat";
-import { ConversationService } from "@/services/conversation";
-import { createDiscordClient } from "@/services/discord/client";
-import { DiscordSenderService } from "@/services/discord/sender";
+import { ConversationService, TaskService, UserService } from "@/services/db";
+import { createDiscordClient, DiscordSenderService } from "@/services/discord";
 import { ExtractionService } from "@/services/extraction";
-import { TaskService } from "@/services/task";
-import { UserService } from "@/services/user";
 import { MessageHandler } from "./handlers/on-message-create";
 import { onReady } from "./handlers/on-ready";
 

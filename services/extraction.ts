@@ -1,5 +1,5 @@
 import { EXTRACTION_SYSTEM_PROMPT } from "@/constants/prompts";
-import type { AIMessage, AIService } from "@/services/ai/ai-service";
+import type { AIMessage, AIService } from "@/services/ai";
 
 /** 抽出された新規タスク */
 type ExtractedTask = {

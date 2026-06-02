@@ -1,5 +1,5 @@
 import { CHAT_SYSTEM_PROMPT } from "@/constants/prompts";
-import type { AIMessage, AIService } from "@/services/ai/ai-service";
+import type { AIMessage, AIService } from "@/services/ai";
 import type { Database } from "@/types/database";
 
 type ConversationRow = Database["public"]["Tables"]["conversations"]["Row"];
