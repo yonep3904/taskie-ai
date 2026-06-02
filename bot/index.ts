@@ -3,6 +3,7 @@ import { Env } from "@/lib/env";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { OpenAIAIService } from "@/services/ai";
 import { ChatService, ExtractionService } from "@/services/chat";
+import { ContextService } from "@/services/context";
 import {
   ConversationService,
   MemoryService,
@@ -23,15 +24,20 @@ const memoryService = new MemoryService(supabase);
 const extractionService = new ExtractionService(aiService);
 const chatService = new ChatService(aiService);
 
+const contextService = new ContextService(
+  conversationService,
+  taskService,
+  memoryService,
+  extractionService,
+);
+
 const discord = createDiscordClient();
 const discordSenderService = new DiscordSenderService(discord);
 
 const messageHandler = new MessageHandler(
   userService,
   conversationService,
-  taskService,
-  memoryService,
-  extractionService,
+  contextService,
   chatService,
   discordSenderService,
 );
