@@ -1,6 +1,6 @@
 import { CHAT_SYSTEM_PROMPT } from "@/constants/prompts";
 import type { AIMessage, AIService } from "@/services/ai";
-import type { Database, TaskRow } from "@/types/database";
+import type { Database, MemoryRow, TaskRow } from "@/types/database";
 
 type ConversationRow = Database["public"]["Tables"]["conversations"]["Row"];
 
@@ -20,16 +20,25 @@ export class ChatService {
    *
    * @param history     - 直近の会話履歴（古い順）
    * @param userMessage - ユーザーの新規メッセージ
+   * @param memories    - ユーザーの長期記憶一覧
    * @param taskContext - 今回のタスク操作情報。null の場合はシステムプロンプトに追記しない
    */
   async generateReply(
     history: ConversationRow[],
     userMessage: string,
+    memories: MemoryRow[],
     taskContext: string | null = null,
   ): Promise<string> {
-    const systemInstruction = taskContext
-      ? `${CHAT_SYSTEM_PROMPT}\n\n## 今回のタスク操作\n${taskContext}`
-      : CHAT_SYSTEM_PROMPT;
+    let systemInstruction = CHAT_SYSTEM_PROMPT;
+
+    if (memories.length > 0) {
+      const memoryLines = memories.map((m) => `- ${m.content}`).join("\n");
+      systemInstruction += `\n\n## ユーザーについて覚えていること\n${memoryLines}`;
+    }
+
+    if (taskContext) {
+      systemInstruction += `\n\n## 今回のタスク操作\n${taskContext}`;
+    }
 
     const messages: AIMessage[] = [
       ...history.map(toAIMessage),
