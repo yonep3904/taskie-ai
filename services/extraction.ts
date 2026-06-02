@@ -47,35 +47,35 @@ const EMPTY_RESULT: ExtractionResult = {
   completedTaskTitles: [],
 };
 
-/**
- * ユーザーメッセージから新規タスクと完了タスクを抽出する。
- *
- * @param ai          - 使用する AI サービス
- * @param userMessage - 解析対象のユーザーメッセージ
- * @returns 抽出結果。解析失敗時は空の結果を返す
- */
-export async function extractFromMessage(
-  ai: AIService,
-  userMessage: string,
-): Promise<ExtractionResult> {
-  const now = new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
+export class ExtractionService {
+  constructor(private readonly aiService: AIService) {}
 
-  const messages: AIMessage[] = [
-    {
-      role: "user",
-      content: `以下のメッセージを解析してください。\n\n現在日時: ${now}\n\nメッセージ:\n${userMessage}`,
-    },
-  ];
+  /**
+   * ユーザーメッセージから新規タスクと完了タスクを抽出する。
+   *
+   * @param userMessage - 解析対象のユーザーメッセージ
+   * @returns 抽出結果。解析失敗時は空の結果を返す
+   */
+  async extract(userMessage: string): Promise<ExtractionResult> {
+    const now = new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
 
-  try {
-    return await ai.generateJSON<ExtractionResult>(
-      messages,
-      EXTRACTION_SYSTEM_PROMPT,
-      EXTRACTION_SCHEMA,
-    );
-  } catch (error) {
-    // 抽出失敗はチャット応答に影響させない
-    console.error("[Extraction] タスク抽出中にエラーが発生しました:", error);
-    return EMPTY_RESULT;
+    const messages: AIMessage[] = [
+      {
+        role: "user",
+        content: `以下のメッセージを解析してください。\n\n現在日時: ${now}\n\nメッセージ:\n${userMessage}`,
+      },
+    ];
+
+    try {
+      return await this.aiService.generateJSON<ExtractionResult>(
+        messages,
+        EXTRACTION_SYSTEM_PROMPT,
+        EXTRACTION_SCHEMA,
+      );
+    } catch (error) {
+      // 抽出失敗はチャット応答に影響させない
+      console.error("[Extraction] タスク抽出中にエラーが発生しました:", error);
+      return EMPTY_RESULT;
+    }
   }
 }

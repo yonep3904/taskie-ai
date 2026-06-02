@@ -12,28 +12,30 @@ function toAIMessage(row: ConversationRow): AIMessage {
   };
 }
 
-/**
- * 会話履歴とユーザーの新規メッセージを受け取り、AI の返答を生成する。
- *
- * @param ai          - 使用する AI サービス
- * @param history     - 直近の会話履歴（古い順）
- * @param userMessage - ユーザーの新規メッセージ
- * @param taskContext - 今回のタスク操作情報。null の場合はシステムプロンプトに追記しない
- */
-export async function generateChatReply(
-  ai: AIService,
-  history: ConversationRow[],
-  userMessage: string,
-  taskContext: string | null = null,
-): Promise<string> {
-  const systemInstruction = taskContext
-    ? `${CHAT_SYSTEM_PROMPT}\n\n## 今回のタスク操作\n${taskContext}`
-    : CHAT_SYSTEM_PROMPT;
+export class ChatService {
+  constructor(private readonly aiService: AIService) {}
 
-  const messages: AIMessage[] = [
-    ...history.map(toAIMessage),
-    { role: "user", content: userMessage },
-  ];
+  /**
+   * 会話履歴とユーザーの新規メッセージを受け取り、AI の返答を生成する。
+   *
+   * @param history     - 直近の会話履歴（古い順）
+   * @param userMessage - ユーザーの新規メッセージ
+   * @param taskContext - 今回のタスク操作情報。null の場合はシステムプロンプトに追記しない
+   */
+  async generateReply(
+    history: ConversationRow[],
+    userMessage: string,
+    taskContext: string | null = null,
+  ): Promise<string> {
+    const systemInstruction = taskContext
+      ? `${CHAT_SYSTEM_PROMPT}\n\n## 今回のタスク操作\n${taskContext}`
+      : CHAT_SYSTEM_PROMPT;
 
-  return ai.generateText(messages, systemInstruction);
+    const messages: AIMessage[] = [
+      ...history.map(toAIMessage),
+      { role: "user", content: userMessage },
+    ];
+
+    return this.aiService.generateText(messages, systemInstruction);
+  }
 }
