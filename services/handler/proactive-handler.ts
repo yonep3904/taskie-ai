@@ -108,7 +108,7 @@ export class ProactiveHandler {
       this.contextService.buildSystemPromptAdditions(context);
     const message = await this.chatService.generateMessage(
       systemAdditions,
-      "ユーザーへの自発的な短い会話メッセージを1件だけ生成してください。課題状況や記憶を参考にしてもよいですが、完全な雑談でも構いません。",
+      "ユーザーへの自発的な短い雑談メッセージを1件だけ生成してください。タスクや締切のリマインドは含めないでください。",
     );
 
     await this.discordSenderService.sendDM(user.discord_id, message);

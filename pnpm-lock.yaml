@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@discordjs/rest':
+        specifier: ^2.6.1
+        version: 2.6.1
       '@google/genai':
         specifier: ^2.7.0
         version: 2.7.0(@modelcontextprotocol/sdk@1.29.0(zod@3.25.76))
@@ -23,6 +26,9 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      discord-api-types:
+        specifier: ^0.38.48
+        version: 0.38.48
       discord.js:
         specifier: ^14.26.4
         version: 14.26.4
