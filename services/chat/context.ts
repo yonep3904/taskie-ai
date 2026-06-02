@@ -61,7 +61,10 @@ export class ContextService {
   ): Promise<ReplyContext> {
     const [history, memories, { registered, completed }] = await Promise.all([
       this.conversationService.getRecentHistory(user.id),
-      this.memoryService.findAll(user.id),
+      this.memoryService.findAll(user.id).catch((error) => {
+        console.error("[Context] 記憶の取得中にエラーが発生しました:", error);
+        return [] as MemoryRow[];
+      }),
       this.runExtraction(user, userMessage).catch((error) => {
         console.error("[Context] 抽出処理中にエラーが発生しました:", error);
         return { registered: [] as TaskRow[], completed: [] as TaskRow[] };
@@ -77,8 +80,14 @@ export class ContextService {
    */
   async gatherForProactive(user: UserRow): Promise<ProactiveContext> {
     const [memories, pendingTasks] = await Promise.all([
-      this.memoryService.findAll(user.id),
-      this.taskService.findPending(user.id),
+      this.memoryService.findAll(user.id).catch((error) => {
+        console.error("[Context] 記憶の取得中にエラーが発生しました:", error);
+        return [] as MemoryRow[];
+      }),
+      this.taskService.findPending(user.id).catch((error) => {
+        console.error("[Context] タスクの取得中にエラーが発生しました:", error);
+        return [] as TaskRow[];
+      }),
     ]);
 
     return { type: "proactive", memories, pendingTasks };
