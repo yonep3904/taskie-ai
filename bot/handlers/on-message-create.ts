@@ -5,8 +5,8 @@ import {
   buildTaskContext,
   WELCOME_MESSAGE,
 } from "@/constants/bot-messages";
-import type { AIService } from "@/lib/ai/ai-service";
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { AIService } from "@/services/ai/ai-service";
 import { generateChatReply } from "@/services/chat";
 import { getRecentHistory, saveConversation } from "@/services/conversation";
 import { replyToMessage } from "@/services/discord/sender";

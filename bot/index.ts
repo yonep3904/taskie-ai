@@ -1,6 +1,6 @@
 import { Events } from "discord.js";
-import { GeminiAIService } from "@/lib/ai/gemini";
 import { Env } from "@/lib/env";
+import { GeminiAIService } from "@/services/ai/gemini";
 import {
   getDiscordClient,
   loginDiscordClient,
