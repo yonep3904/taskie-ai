@@ -140,6 +140,37 @@ export type Database = {
           },
         ];
       };
+      diaries: {
+        Row: {
+          id: string;
+          user_id: string;
+          content: string;
+          date: string; // YYYY-MM-DD
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          content: string;
+          date: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          content?: string;
+          date?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "diaries_user_id_fkey";
+            columns: ["user_id"];
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<never, never>;
     Functions: Record<never, never>;
@@ -166,3 +197,6 @@ export type MemoryRow = Database["public"]["Tables"]["memories"]["Row"];
 
 /** memories テーブルの importance 型 */
 export type MemoryImportance = MemoryRow["importance"];
+
+/** diaries テーブルの行型 */
+export type DiaryRow = Database["public"]["Tables"]["diaries"]["Row"];
