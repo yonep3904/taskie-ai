@@ -6,9 +6,7 @@ import type { Database, DiaryRow } from "@/types/database";
  * 日記はユーザー × 日付でユニーク。
  */
 export class DiaryService {
-  constructor(
-    private readonly supabaseClient: SupabaseClient<Database>,
-  ) {}
+  constructor(private readonly supabaseClient: SupabaseClient<Database>) {}
 
   /**
    * 指定日の日記を取得する。存在しない場合は null を返す。

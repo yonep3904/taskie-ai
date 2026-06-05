@@ -1,17 +1,19 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { DIARY_SYSTEM_PROMPT } from "@/constants/prompts";
+import { Env } from "@/lib/env";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/supabase/user";
 import { OpenAIAIService } from "@/services/ai";
 import { ConversationService, DiaryService, TaskService } from "@/services/db";
-import { Env } from "@/lib/env";
 
 /** JST での今日の日付を YYYY-MM-DD 形式で返す */
 function getTodayJST(): string {
   return new Date(
     new Date().toLocaleString("en-CA", { timeZone: "Asia/Tokyo" }),
-  ).toISOString().slice(0, 10);
+  )
+    .toISOString()
+    .slice(0, 10);
 }
 
 /**
@@ -48,9 +50,7 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
 
   const conversationSummary =
     recentConversations.length > 0
-      ? recentConversations
-          .map((c) => `[${c.role}] ${c.content}`)
-          .join("\n")
+      ? recentConversations.map((c) => `[${c.role}] ${c.content}`).join("\n")
       : "（会話なし）";
 
   const taskSummary =
