@@ -1,8 +1,9 @@
 import {
   CHAT_SYSTEM_PROMPT,
+  FILE_EXPLANATION_SYSTEM_PROMPT,
   PROACTIVE_SYSTEM_PROMPT,
 } from "@/constants/prompts";
-import type { AIMessage, AIService } from "@/services/ai";
+import type { AIMessage, AIService, ProcessedAttachment } from "@/services/ai";
 import type { Database } from "@/types/database";
 
 type ConversationRow = Database["public"]["Tables"]["conversations"]["Row"];
@@ -38,6 +39,26 @@ export class ChatService {
     ];
 
     return this.aiService.generateText(messages, systemInstruction);
+  }
+
+  /**
+   * 添付ファイル（画像・PDF）の解説を生成する。
+   *
+   * @param userMessage      - ファイルと一緒に送られたテキスト（質問・補足など）
+   * @param attachments      - 前処理済みの添付ファイル一覧
+   * @param systemAdditions  - ContextService が生成したシステムプロンプト追加テキスト
+   */
+  async generateExplanation(
+    userMessage: string,
+    attachments: ProcessedAttachment[],
+    systemAdditions: string,
+  ): Promise<string> {
+    const systemInstruction = FILE_EXPLANATION_SYSTEM_PROMPT + systemAdditions;
+    return this.aiService.generateTextWithAttachments(
+      userMessage,
+      attachments,
+      systemInstruction,
+    );
   }
 
   /**
