@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 import { createConfig, type DefaultConfig } from "@/utils/create-config";
-import type { AIMessage, AIService } from "./ai-service";
+import type { AIMessage, AIService, ProcessedAttachment } from "./ai-service";
 
 export interface OpenAIAIServiceConfig {
   apiKey: string;
@@ -76,5 +76,51 @@ export class OpenAIAIService implements AIService {
     const text = response.choices[0]?.message.content;
     if (!text) throw new Error("OpenAI から空のレスポンスが返されました");
     return JSON.parse(text) as T;
+  }
+
+  /**
+   * 画像・ドキュメントを含むメッセージで GPT-4o vision を使用してテキストを生成する。
+   * 画像は URL を直接渡し、ドキュメントは抽出済みテキストを埋め込む。
+   */
+  async generateTextWithAttachments(
+    userMessage: string,
+    attachments: ProcessedAttachment[],
+    systemInstruction?: string,
+  ): Promise<string> {
+    const textPart: OpenAI.ChatCompletionContentPartText = {
+      type: "text",
+      text: userMessage || "このファイルを解説してください。",
+    };
+
+    const fileParts: OpenAI.ChatCompletionContentPart[] = attachments.map(
+      (att) => {
+        if (att.type === "image") {
+          return {
+            type: "image_url",
+            image_url: { url: att.url },
+          } satisfies OpenAI.ChatCompletionContentPartImage;
+        }
+        return {
+          type: "text",
+          text: `\n[${att.filename}の内容]\n${att.text}`,
+        } satisfies OpenAI.ChatCompletionContentPartText;
+      },
+    );
+
+    const messages: OpenAI.ChatCompletionMessageParam[] = [
+      ...(systemInstruction
+        ? [{ role: "system" as const, content: systemInstruction }]
+        : []),
+      { role: "user", content: [textPart, ...fileParts] },
+    ];
+
+    const response = await this.client.chat.completions.create({
+      model: this.config.model,
+      messages,
+    });
+
+    const text = response.choices[0]?.message.content;
+    if (!text) throw new Error("OpenAI から空のレスポンスが返されました");
+    return text;
   }
 }
