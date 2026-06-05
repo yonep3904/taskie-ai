@@ -34,10 +34,22 @@ export default async function DashboardPage() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
+      {/* ページヘッダー */}
       <div>
-        <h1 className="text-xl font-semibold text-zinc-900">ダッシュボード</h1>
-        <p className="text-sm text-zinc-500 mt-0.5">{today}</p>
+        <h1
+          className="text-2xl font-bold tracking-tight sm:text-3xl"
+          style={{
+            background:
+              "linear-gradient(90deg, #e2e8f0 0%, #a5b4fc 60%, #c084fc 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+          }}
+        >
+          おかえりなさい、{user.display_name} さん
+        </h1>
+        <p className="mt-1 text-sm text-slate-500">{today}</p>
       </div>
 
       <TodaySummary tasks={tasks} />
