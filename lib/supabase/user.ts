@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { UserService } from "@/services/db";
 import type { Database, UserRow } from "@/types/database";
 
@@ -21,6 +22,9 @@ function getDiscordId(
 /**
  * Supabase Auth のセッションを元に public.users の行を返す。
  * 未ログイン・ユーザーレコード未存在の場合は null を返す。
+ *
+ * DB クエリは RLS をバイパスする admin クライアントで実行する。
+ * RLS ポリシーが未設定のため、通常クライアントではクエリが遮断される。
  */
 export async function getCurrentUser(
   supabase: SupabaseClient<Database>,
@@ -35,6 +39,7 @@ export async function getCurrentUser(
   const discordId = getDiscordId(user);
   if (!discordId) return null;
 
-  const userService = new UserService(supabase);
+  const adminSupabase = createAdminClient();
+  const userService = new UserService(adminSupabase);
   return userService.findByDiscordId(discordId);
 }
