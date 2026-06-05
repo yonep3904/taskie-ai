@@ -29,6 +29,20 @@ export class UserService {
   }
 
   /**
+   * Discord ID でユーザーを検索する。存在しない場合は null を返す。
+   */
+  async findByDiscordId(discordId: string): Promise<UserRow | null> {
+    const { data, error } = await this.supabaseClient
+      .from("users")
+      .select("*")
+      .eq("discord_id", discordId)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data;
+  }
+
+  /**
    * Discord ID でユーザーを検索し、存在しなければ新規作成する。
    */
   async findOrCreate(params: FindOrCreateParams): Promise<FindOrCreateResult> {
