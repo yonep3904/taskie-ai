@@ -59,4 +59,37 @@ export class ConversationService {
     // 古い順に並べ直して返す
     return (data ?? []).reverse();
   }
+
+  /**
+   * 指定日（JST）の会話履歴を古い順で取得する。
+   * 当日の場合は現在時刻まで、過去日は 23:59:59 JST まで。
+   *
+   * @param userId - public.users の id
+   * @param date   - YYYY-MM-DD 形式の JST 日付
+   */
+  async getHistoryForDate(
+    userId: string,
+    date: string,
+  ): Promise<ConversationRow[]> {
+    const todayJST = new Intl.DateTimeFormat("sv-SE", {
+      timeZone: "Asia/Tokyo",
+    }).format(new Date());
+
+    const startUTC = new Date(`${date}T00:00:00+09:00`).toISOString();
+    const endUTC =
+      date >= todayJST
+        ? new Date().toISOString()
+        : new Date(`${date}T23:59:59+09:00`).toISOString();
+
+    const { data, error } = await this.supabaseClient
+      .from("conversations")
+      .select("*")
+      .eq("user_id", userId)
+      .gte("created_at", startUTC)
+      .lte("created_at", endUTC)
+      .order("created_at", { ascending: true });
+
+    if (error) throw error;
+    return data ?? [];
+  }
 }

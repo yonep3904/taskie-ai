@@ -27,7 +27,7 @@ export class DiaryService {
   }
 
   /**
-   * 日記を保存する。同一ユーザー × 日付の既存レコードは上書きする。
+   * 日記を保存する。同一ユーザー × 日付の既存レコードは上書きしない（不変）。
    *
    * @param userId  - public.users の id
    * @param content - 日記本文
@@ -36,11 +36,27 @@ export class DiaryService {
   async save(userId: string, content: string, date: string): Promise<DiaryRow> {
     const { data, error } = await this.supabaseClient
       .from("diaries")
-      .upsert({ user_id: userId, content, date })
+      .insert({ user_id: userId, content, date })
       .select()
       .single();
 
     if (error) throw error;
     return data;
+  }
+
+  /**
+   * ユーザーの日記が存在する日付一覧を降順で返す。
+   *
+   * @param userId - public.users の id
+   */
+  async listDates(userId: string): Promise<string[]> {
+    const { data, error } = await this.supabaseClient
+      .from("diaries")
+      .select("date")
+      .eq("user_id", userId)
+      .order("date", { ascending: false });
+
+    if (error) throw error;
+    return (data ?? []).map((r) => r.date as string);
   }
 }
