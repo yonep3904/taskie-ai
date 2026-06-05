@@ -1,10 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { UserService } from "@/services/db";
 
 const DEFAULT_REDIRECT_PATH = "/";
 
 /**
- * Supabase Auth が OAuth Provider から受け取った code をセッション Cookie に交換する
+ * Supabase Auth が OAuth Provider から受け取った code をセッション Cookie に交換し、
+ * public.users にユーザーレコードを upsert する。
  */
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
@@ -28,6 +31,39 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(
         buildRedirectUrlWithAuthError(requestUrl, next, error.message),
       );
+    }
+
+    // 認証成功後、public.users にレコードを upsert する。
+    // RLS をバイパスするため admin クライアントを使用。
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (user) {
+      const discordId =
+        (user.user_metadata?.provider_id as string | undefined) ?? null;
+
+      if (discordId) {
+        const adminSupabase = createAdminClient();
+        const userService = new UserService(adminSupabase);
+        await userService
+          .findOrCreate({
+            discordId,
+            discordUsername:
+              (user.user_metadata?.user_name as string | undefined) ??
+              (user.user_metadata?.full_name as string | undefined) ??
+              discordId,
+            displayName:
+              (user.user_metadata?.full_name as string | undefined) ??
+              (user.user_metadata?.user_name as string | undefined) ??
+              discordId,
+            avatarUrl:
+              (user.user_metadata?.avatar_url as string | undefined) ?? null,
+          })
+          .catch(() => {
+            // ユーザー作成失敗はログインを妨げない
+          });
+      }
     }
   }
 
