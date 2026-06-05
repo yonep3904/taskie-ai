@@ -9,11 +9,10 @@ import { ConversationService, DiaryService, TaskService } from "@/services/db";
 
 /** JST での今日の日付を YYYY-MM-DD 形式で返す */
 function getTodayJST(): string {
-  return new Date(
-    new Date().toLocaleString("en-CA", { timeZone: "Asia/Tokyo" }),
-  )
-    .toISOString()
-    .slice(0, 10);
+  // スウェーデン語のロケールを使うと ISO 8601 形式（YYYY-MM-DD）で日付がフォーマットされるため、これを利用
+  return new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Tokyo" }).format(
+    new Date(),
+  );
 }
 
 /**
