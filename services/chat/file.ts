@@ -52,9 +52,7 @@ export class FileService {
   /**
    * 複数の添付ファイルを一括処理し、サポートされたものだけを返す。
    */
-  async processAll(
-    attachments: Attachment[],
-  ): Promise<ProcessedAttachment[]> {
+  async processAll(attachments: Attachment[]): Promise<ProcessedAttachment[]> {
     const results = await Promise.all(
       attachments.map((att) => this.process(att)),
     );
@@ -74,10 +72,7 @@ export class FileService {
         filename: attachment.name ?? "document.pdf",
       };
     } catch (error) {
-      console.error(
-        `[FileService] PDF 解析失敗: ${attachment.name}`,
-        error,
-      );
+      console.error(`[FileService] PDF 解析失敗: ${attachment.name}`, error);
       return null;
     }
   }
