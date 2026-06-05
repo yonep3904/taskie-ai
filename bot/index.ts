@@ -2,7 +2,7 @@ import { Events } from "discord.js";
 import { Env } from "@/lib/env";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { OpenAIAIService } from "@/services/ai";
-import { ChatService, ExtractionService } from "@/services/chat";
+import { ChatService, ExtractionService, FileService } from "@/services/chat";
 import { ContextService } from "@/services/chat/context";
 import {
   ConversationService,
@@ -24,6 +24,7 @@ const taskService = new TaskService(supabase);
 const memoryService = new MemoryService(supabase);
 const extractionService = new ExtractionService(aiService);
 const chatService = new ChatService(aiService);
+const fileService = new FileService();
 
 const contextService = new ContextService(
   conversationService,
@@ -40,6 +41,7 @@ const messageHandler = new MessageHandler(
   conversationService,
   contextService,
   chatService,
+  fileService,
   discordSenderService,
 );
 

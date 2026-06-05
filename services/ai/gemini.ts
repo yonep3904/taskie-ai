@@ -1,7 +1,7 @@
-import type { Content, Schema } from "@google/genai";
+import type { Content, Part, Schema } from "@google/genai";
 import { GoogleGenAI } from "@google/genai";
 import { createConfig, type DefaultConfig } from "@/utils/create-config";
-import type { AIMessage, AIService } from "./ai-service";
+import type { AIMessage, AIService, ProcessedAttachment } from "./ai-service";
 
 /** リトライ対象の HTTP ステータスコード（一時的な過負荷・レート制限） */
 const RETRYABLE_STATUSES = new Set([429, 503]);
@@ -111,5 +111,40 @@ export class GeminiAIService implements AIService {
     const text = response.text;
     if (!text) throw new Error("Gemini から空のレスポンスが返されました");
     return JSON.parse(text) as T;
+  }
+
+  /**
+   * 画像・ドキュメントを含むメッセージで Gemini マルチモーダルを使用してテキストを生成する。
+   * 画像は URL からダウンロードして base64 インラインデータとして渡す。
+   */
+  async generateTextWithAttachments(
+    userMessage: string,
+    attachments: ProcessedAttachment[],
+    systemInstruction?: string,
+  ): Promise<string> {
+    const parts: Part[] = [
+      { text: userMessage || "このファイルを解説してください。" },
+    ];
+
+    for (const att of attachments) {
+      if (att.type === "image") {
+        const response = await fetch(att.url);
+        const buffer = await response.arrayBuffer();
+        const data = Buffer.from(buffer).toString("base64");
+        parts.push({ inlineData: { mimeType: att.mimeType, data } });
+      } else {
+        parts.push({ text: `\n[${att.filename}の内容]\n${att.text}` });
+      }
+    }
+
+    const response = await this.client.models.generateContent({
+      model: this.config.model,
+      contents: [{ role: "user", parts }],
+      config: systemInstruction ? { systemInstruction } : undefined,
+    });
+
+    const text = response.text;
+    if (!text) throw new Error("Gemini から空のレスポンスが返されました");
+    return text;
   }
 }
