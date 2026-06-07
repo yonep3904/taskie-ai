@@ -41,8 +41,8 @@ export function TodaySummary({ tasks }: Props) {
       border: "rgba(99,102,241,0.35)",
       glow: "rgba(99,102,241,0.2)",
       barGradient: "linear-gradient(90deg, #6366f1, #3b82f6)",
-      // ライトモード: 濃い紺、ダークモード: 明るい紫
-      textClass: "text-indigo-800 dark:text-indigo-300",
+      // ライトモード: 濃い紺、ダークモード: やや濃い紫
+      textClass: "text-indigo-900 dark:text-indigo-200",
       iconColor: "#818cf8",
       isAlert: false,
     },
