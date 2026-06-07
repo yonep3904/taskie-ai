@@ -22,7 +22,7 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="dashboard-aurora min-h-svh relative overflow-hidden">
+    <div className="dashboard-aurora dark min-h-svh relative overflow-hidden">
       {/* グリッドパターン */}
       <div className="dashboard-grid pointer-events-none absolute inset-0" />
 
