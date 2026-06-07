@@ -5,6 +5,7 @@ import { HiSparkles } from "react-icons/hi2";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/lib/supabase/auth";
 import type { UserRow } from "@/types/database";
+import { ThemeToggle } from "./theme-toggle";
 
 type Props = {
   user: UserRow;
@@ -75,16 +76,20 @@ export function DashboardHeader({ user }: Props) {
           </div>
         </div>
 
-        {/* ログアウトボタン */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleSignOut}
-          disabled={isLoading}
-          className="border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white hover:border-white/20 transition-all duration-200"
-        >
-          {isLoading ? "処理中..." : "ログアウト"}
-        </Button>
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+
+          {/* ログアウトボタン */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSignOut}
+            disabled={isLoading}
+            className="border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white hover:border-white/20 transition-all duration-200"
+          >
+            {isLoading ? "処理中..." : "ログアウト"}
+          </Button>
+        </div>
       </div>
     </header>
   );
