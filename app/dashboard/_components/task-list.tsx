@@ -155,13 +155,11 @@ export function TaskList({ tasks }: Props) {
 
                   <div className="min-w-0 flex-1">
                     <p
-                      className="truncate text-sm font-medium"
-                      style={{
-                        color:
-                          task.status === "completed" ? "#475569" : "#e2e8f0",
-                        textDecoration:
-                          task.status === "completed" ? "line-through" : "none",
-                      }}
+                      className={`truncate text-sm font-medium ${
+                        task.status === "completed"
+                          ? "text-slate-500 dark:text-slate-500 line-through"
+                          : "text-slate-800 dark:text-slate-100"
+                      }`}
                     >
                       {task.title}
                     </p>

@@ -99,7 +99,9 @@ export function DiaryCard() {
         >
           <RiRobot2Fill className="h-4 w-4" />
         </div>
-        <h3 className="text-sm font-semibold text-slate-200">Taskie の日記</h3>
+        <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+          Taskie の日記
+        </h3>
 
         {diary.status === "loading" && (
           <div className="ml-auto flex items-center gap-1">
@@ -131,11 +133,11 @@ export function DiaryCard() {
           style={{ background: "rgba(255,255,255,0.06)" }}
           aria-label="前の日"
         >
-          <HiChevronLeft className="h-4 w-4 text-slate-300" />
+          <HiChevronLeft className="h-4 w-4 text-slate-600 dark:text-slate-300" />
         </button>
 
         <div className="text-center">
-          <p className="text-xs font-semibold text-slate-200">
+          <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
             {formatDateJP(currentDate)}
           </p>
           {isToday && (
@@ -186,7 +188,7 @@ export function DiaryCard() {
           style={{ background: "rgba(255,255,255,0.06)" }}
           aria-label="次の日"
         >
-          <HiChevronRight className="h-4 w-4 text-slate-300" />
+          <HiChevronRight className="h-4 w-4 text-slate-600 dark:text-slate-300" />
         </button>
       </div>
 
@@ -209,7 +211,7 @@ export function DiaryCard() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.3 }}
-            className="whitespace-pre-wrap text-sm leading-relaxed text-slate-300"
+            className="whitespace-pre-wrap text-sm leading-relaxed text-slate-800 dark:text-slate-300"
           >
             {diary.content}
           </motion.p>
@@ -220,7 +222,7 @@ export function DiaryCard() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="text-sm text-slate-600"
+            className="text-sm text-slate-500 dark:text-slate-500"
           >
             この日の日記はありません
           </motion.p>
@@ -231,7 +233,7 @@ export function DiaryCard() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="text-sm text-slate-600"
+            className="text-sm text-slate-500 dark:text-slate-500"
           >
             日記を取得できませんでした
           </motion.p>

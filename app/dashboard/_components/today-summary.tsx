@@ -41,9 +41,9 @@ export function TodaySummary({ tasks }: Props) {
       border: "rgba(99,102,241,0.35)",
       glow: "rgba(99,102,241,0.2)",
       barGradient: "linear-gradient(90deg, #6366f1, #3b82f6)",
-      textColor: "#a5b4fc",
+      // ライトモード: 濃い紺、ダークモード: やや濃い紫
+      textClass: "text-indigo-900 dark:text-indigo-200",
       iconColor: "#818cf8",
-      alwaysHighlight: false,
       isAlert: false,
     },
     {
@@ -61,9 +61,12 @@ export function TodaySummary({ tasks }: Props) {
         urgentCount > 0
           ? "linear-gradient(90deg, #f59e0b, #f97316)"
           : "linear-gradient(90deg, #475569, #475569)",
-      textColor: urgentCount > 0 ? "#fcd34d" : "#64748b",
+      // アラート時: ライトモード濃いアンバー / ダークモード明るいアンバー。非アラート時: slate-500
+      textClass:
+        urgentCount > 0
+          ? "text-amber-800 dark:text-yellow-300"
+          : "text-slate-500",
       iconColor: urgentCount > 0 ? "#fbbf24" : "#475569",
-      alwaysHighlight: false,
       isAlert: urgentCount > 0,
     },
     {
@@ -81,9 +84,10 @@ export function TodaySummary({ tasks }: Props) {
         overdueCount > 0
           ? "linear-gradient(90deg, #f43f5e, #ef4444)"
           : "linear-gradient(90deg, #475569, #475569)",
-      textColor: overdueCount > 0 ? "#fca5a5" : "#64748b",
+      // アラート時: ライトモード濃い赤 / ダークモード明るいピンク。非アラート時: slate-500
+      textClass:
+        overdueCount > 0 ? "text-red-800 dark:text-red-300" : "text-slate-500",
       iconColor: overdueCount > 0 ? "#f87171" : "#475569",
-      alwaysHighlight: false,
       isAlert: overdueCount > 0,
     },
   ];
@@ -124,8 +128,7 @@ export function TodaySummary({ tasks }: Props) {
 
             <div className="flex items-start justify-between">
               <p
-                className="text-xs font-medium leading-tight"
-                style={{ color: stat.textColor }}
+                className={`text-xs font-medium leading-tight ${stat.textClass}`}
               >
                 {stat.label}
               </p>
@@ -144,8 +147,7 @@ export function TodaySummary({ tasks }: Props) {
                 type: "spring",
                 stiffness: 200,
               }}
-              className="mt-2 text-4xl font-bold tabular-nums"
-              style={{ color: stat.textColor }}
+              className={`mt-2 text-4xl font-bold tabular-nums ${stat.textClass}`}
             >
               {stat.value}
             </motion.p>

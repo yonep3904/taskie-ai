@@ -41,7 +41,7 @@ export default async function DashboardPage() {
           className="text-2xl font-bold tracking-tight sm:text-3xl"
           style={{
             background:
-              "linear-gradient(90deg, #e2e8f0 0%, #a5b4fc 60%, #c084fc 100%)",
+              "linear-gradient(90deg, #818cf8 0%, #a5b4fc 60%, #c084fc 100%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
             backgroundClip: "text",
