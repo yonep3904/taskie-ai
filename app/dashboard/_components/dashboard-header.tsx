@@ -5,7 +5,6 @@ import { HiSparkles } from "react-icons/hi2";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/lib/supabase/auth";
 import type { UserRow } from "@/types/database";
-import { ThemeToggle } from "./theme-toggle";
 
 type Props = {
   user: UserRow;
@@ -77,8 +76,6 @@ export function DashboardHeader({ user }: Props) {
         </div>
 
         <div className="flex items-center gap-3">
-          <ThemeToggle />
-
           {/* ログアウトボタン */}
           <Button
             variant="outline"
